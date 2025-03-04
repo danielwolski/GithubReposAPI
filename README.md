@@ -1,66 +1,132 @@
-# github-repos-api
+# GitHub Repositories API
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+This project is a Quarkus 3 application written in Java that exposes a REST API to list all GitHub repositories for a given user which are not forks. For each repository, the API returns the repository name, owner login, and for each branch its name along with the last commit SHA.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+# Project Stack
 
-## Running the application in dev mode
+**Language:** Java 17
 
-You can run your application in dev mode that enables live coding using:
+**Framework:** Quarkus 3.19.1
 
-```shell script
+**Build Tool:** Gradle
+
+# API Endpoints
+
+## Get Non-Fork Repositories for a GitHub User
+
+### Request:
+
+```
+GET <host>/api/v1/github/users/{username}/repos
+```
+
+#### Example:
+```
+GET http://localhost:8080/api/v1/github/users/octocat/repos
+```
+
+### Response:
+
+#### Successful response
+The response is a JSON array where each element represents a repository. Each repository includes its name, the owner's login, and a list of branches. Each branch has a name and its last commit SHA.
+```
+[
+    {
+        "name": "git-consortium",
+        "ownerLogin": "octocat",
+        "branches": [
+            {
+                "name": "master",
+                "lastCommitSha": "b33a9c7c02ad93f621fa38f0e9fc9e867e12fa0e"
+            }
+        ]
+    },
+    {
+        "name": "hello-worId",
+        "ownerLogin": "octocat",
+        "branches": [
+            {
+                "name": "master",
+                "lastCommitSha": "7e068727fdb347b685b658d2981f8c85f7bf0585"
+            }
+        ]
+    }
+]
+```
+
+#### Error Response - User Not Found:
+
+When a non-existent GitHub username is provided, the API returns a JSON error object with the status and a descriptive message.
+
+```
+{
+  "status": 404,
+  "message": "User nonExistentUser not found on GitHub"
+}
+```
+# Running the Application
+
+### Clone the Repository:
+
+```
+git clone https://github.com/danielwolski/GithubReposAPI.git
+```
+
+### Set the Environment Variable:
+The application requires a GitHub API token to authenticate requests to GitHub. Make sure to set the environment variable `GITHUB_API_TOKEN` with your valid GitHub API token. You can define this in a `.env` file. \
+Create a `.env` file in the root directory with the following content:
+
+```
+GITHUB_API_TOKEN=Bearer <your-github-api-token>
+e.g.
+GITHUB_API_TOKEN=Bearer github_gfda321harkjgndkajnfkvcrerf3nmdfn3n1nnj4k3k2j1
+```
+
+For more information about generating GitHub API token, check `Getting GitHub API token` section
+
+
+### Run the Application in Dev Mode:
+```
 ./gradlew quarkusDev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+### Testing
+The project includes an integration test (covering the happy path). In order for the integration test to run properly, `.env` file with proper GitHub API token must be created. To run tests:
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./gradlew build
+```
+./gradlew test
 ```
 
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
+# Getting GitHub API token
 
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
+### Description
 
-If you want to build an _über-jar_, execute the following command:
+This application connects with GitHub API through following endpoints:
 
-```shell script
-./gradlew build -Dquarkus.package.jar.type=uber-jar
-```
+REST API endpoint to list user repositories \
+Required token permission: "Metadata" repository permissions (read) \
+https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
+REST API endpoint to list branches \
+Required token permission: "Contents" repository permissions (read) \
+https://docs.github.com/en/rest/branches/branches?apiVersion=2022-11-28#list-branches
 
-## Creating a native executable
+### Token generation
 
-You can create a native executable using:
+In order to generate fine-grained token with required permissions:
 
-```shell script
-./gradlew build -Dquarkus.native.enabled=true
-```
+#### 1. Login to your GitHub account
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+#### 2. Go to Developer settings
 
-```shell script
-./gradlew build -Dquarkus.native.enabled=true -Dquarkus.native.container-build=true
-```
+#### 3. Go to Personal access tokens -> Fine-grained tokens
 
-You can then execute your native executable with: `./build/github-repos-api-1.0.0-SNAPSHOT-runner`
+#### 4. Generate new token  with following settings:
+- **Repository access:** All repositories (Also includes public repositories (read-only))
+- **Repository permissions:** Contents (read-only), Metadata (read-only)
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/gradle-tooling>.
 
-## Related Guides
 
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
 
-## Provided Code
 
-### REST
 
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
